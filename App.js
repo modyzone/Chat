@@ -14,10 +14,10 @@ import { createStackNavigator } from '@react-navigation/stack';
 const Stack = createStackNavigator();
 
 export default class App extends React.Component {
-  // constructor(props) {
+   // constructor(props) {
     // super(props);
     // this.state = { text: '' };
-  // }
+    // }
   render() {
     return (
       <NavigationContainer>

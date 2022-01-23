@@ -1,4 +1,6 @@
 import React from 'react';
+// import react native gesture handler
+import 'react-native-gesture-handler';
 import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 
 
@@ -29,3 +31,4 @@ export default class Start extends React.Component {
         );
   }
 };
+

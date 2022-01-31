@@ -1,7 +1,15 @@
 import React from 'react';
 // import { View, Text, Button } from 'react-native';
 import { View, Platform, KeyboardAvoidingView, StyleSheet } from 'react-native';
-import { GiftedChat, Bubble } from 'react-native-gifted-chat'
+import { 
+  GiftedChat, 
+  Bubble,
+  InputToolbar,
+ } from 'react-native-gifted-chat'
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+
 import firebase from 'firebase';
 import 'firebase/firestore';
 
@@ -14,6 +22,8 @@ import 'firebase/firestore';
   projectId: "test-279ee",
   storageBucket: "test-279ee.appspot.com",
   messagingSenderId: "174026807801",
+  appId: "1:174026807801:web:a5efa74d58c3ac0e144528",
+  measurementId: "G-XX9DBW1M7R"
 
     };
 
@@ -30,7 +40,8 @@ export default class Chat extends React.Component {
 			},
     };
 
-    //initializing firebase
+    
+    // Initialize Firebase
     if (!firebase.apps.length){
       firebase.initializeApp(firebaseConfig);
     }
@@ -76,7 +87,8 @@ onCollectionUpdate = (querySnapshot) => {
 
   
       componentDidMount() {
-
+        let { name } = this.props.route.params;
+        this.props.navigation.setOptions({ title: name });
         		// listens for updates in the collection
 		this.unsubscribe = this.referenceChatMessages
     .orderBy('createdAt', 'desc')
@@ -84,7 +96,7 @@ onCollectionUpdate = (querySnapshot) => {
 
   this.authUnsubscribe = firebase.auth().onAuthStateChanged(async user => {
     if (!user) {
-      await firebase.auth().signInAnonymously();
+      return await firebase.auth().signInAnonymously();
     }
     this.setState({
       uid: user.uid,
@@ -97,7 +109,105 @@ onCollectionUpdate = (querySnapshot) => {
     });
   });
 }
-    // listen to authentication events
+   
+    // calback function for when user sends a message
+  	componentWillUnmount() {
+      // stop listening to authentication
+      this.authUnsubscribe();
+      // stop listening for changes
+      this.unsubscribe();
+    }
+  
+    addMessage() {
+      const message = this.state.messages[0];
+      // add a new message to the collection
+      this.referenceChatMessages.add({
+        _id: message._id,
+        text: message.text || '',
+        createdAt: message.createdAt,
+        user: this.state.user,
+      });
+    }
+  
+    onSend(messages = []) {
+      this.setState(
+        previousState => ({
+          messages: GiftedChat.append(previousState.messages, messages),
+        }),
+        () => {
+          // this.saveMessage();
+          this.addMessage();
+        }
+      );
+    }
+    renderBubble(props) {
+      return (
+        <Bubble
+          {...props}
+          wrapperStyle={{
+            right: {
+              backgroundColor: '#dbb35a',
+            },
+            left: {
+              backgroundColor: 'white',
+            },
+          }}
+        />
+      );
+    }
+    renderInputToolbar(props) {
+      if (this.state.isConnected == false) {
+      } else {
+        return <InputToolbar {...props} />;
+      }
+    }
+  render() {
+    let name = this.props.route.params.name;
+    this.props.navigation.setOptions({ title: name });
+
+    let bgColor = this.props.route.params.bgColor;
+
+    return (
+      
+        <View style={styles.container}>
+        <View
+					style={{ backgroundColor: bgColor, 
+            width: '100%', 
+            height: '100%' 
+          }}
+				>
+        <GiftedChat
+        style={styles.giftedChat}
+        renderBubble={this.renderBubble.bind(this)}
+        renderInputToolbar={this.renderInputToolbar.bind(this)}
+        messages={this.state.messages}
+        onSend={(messages) => this.onSend(messages)}
+        user={{
+          _id: this.state.user._id,
+          name: this.state.name,
+					avatar: this.state.user.avatar,
+        }}
+      />
+      { Platform.OS === 'android' ? ( <KeyboardAvoidingView behavior="height" />) : null }
+    </View>
+</View>
+    );
+}
+
+}
+const styles = StyleSheet.create({
+  container: {
+      flex: 1,
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+  },
+  giftedChat: {
+      color: '#000',
+  },
+});
+
+ // listen to authentication events
     /*this.authUnsubscribe = firebase.auth().onAuthStateChanged(async (user) => {
       if (!user) {
         await firebase.auth().signInAnonymously();
@@ -155,88 +265,6 @@ onCollectionUpdate = (querySnapshot) => {
       ]
     })
   }*/
-    // calback function for when user sends a message
-  	componentWillUnmount() {
-      // stop listening to authentication
-      this.authUnsubscribe();
-      // stop listening for changes
-      this.unsubscribe();
-    }
-  
-    addMessage() {
-      const message = this.state.messages[0];
-      // add a new message to the collection
-      this.referenceChatMessages.add({
-        _id: message._id,
-        text: message.text || '',
-        createdAt: message.createdAt,
-        user: this.state.user,
-      });
-    }
-  
-    onSend(messages = []) {
-      this.setState(
-        previousState => ({
-          messages: GiftedChat.append(previousState.messages, messages),
-        }),
-        () => {
-          this.saveMessage();
-          this.addMessage();
-        }
-      );
-    }
-    renderBubble(props) {
-      return (
-        <Bubble
-          {...props}
-          wrapperStyle={{
-            right: {
-              backgroundColor: '#dbb35a',
-            },
-            left: {
-              backgroundColor: 'white',
-            },
-          }}
-        />
-      );
-    }
-  
-  render() {
-    let name = this.props.route.params.name;
-    this.props.navigation.setOptions({ title: name });
-    return (
-      <View style={{ flex: 1 }}>
-        <View style={styles.container}></View>
-        <View
-					style={{ backgroundColor: bgColor, width: '100%', height: '100%' }}
-				></View>
-        <GiftedChat
-        style={styles.giftedChat}
-        renderBubble={this.renderBubble.bind(this)}
-        messages={this.state.messages}
-        onSend={(messages) => this.onSend(messages)}
-        user={{
-          _id: 1,
-        }}
-      />
-      { Platform.OS === 'android' ? ( <KeyboardAvoidingView behavior="height" />) : null }
-    
-</View>
-    );
-}
-
-}
-const styles = StyleSheet.create({
-  container: {
-      flex: 1,
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-  },
-  giftedChat: {
-      color: '#000',
-  },
-});
 // add a new list to the collection
 /*this.referenceShoppingLists.add({
   name: 'TestList',

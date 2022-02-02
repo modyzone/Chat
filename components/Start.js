@@ -185,9 +185,9 @@ const styles = StyleSheet.create({
 	},
 	inputText: {
 		fontSize: 16,
-		fontWeight: '300',
-		opacity: 0.5,
-		color: '#757083',
+		fontWeight: 'bold',
+		opacity: 1,
+		color: 'blue',
 	},
 	colorSelector: {
 		flex: 1,
@@ -241,6 +241,6 @@ const styles = StyleSheet.create({
 		textAlign: 'center',
 		fontSize: 18,
 		fontWeight: '600',
-		color: '#ffffff',
+		color: '#7accc8',
 	},
 });

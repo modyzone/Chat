@@ -9,7 +9,8 @@ import {
 
 import firebase from 'firebase';
 import 'firebase/firestore';
-
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import NetInfo from '@react-native-community/netinfo';
 
 
   // web app's Firebase configuration
@@ -69,6 +70,42 @@ onCollectionUpdate = (querySnapshot) => {
   });
 };
   
+// get messages from AsyncStorage
+getMessages = async () => {
+  let messages = '';
+  try {
+    messages = (await AsyncStorage.getItem('messages')) || [];
+    this.setState({
+      messages: JSON.parse(messages),
+    });
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
+// save messages on the asyncStorage
+saveMessage = async () => {
+  try {
+    await AsyncStorage.setItem(
+      'messages',
+      JSON.stringify(this.state.messages)
+    );
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
+// delete message from asyncStorage
+deleteMessages = async () => {
+  try {
+    await AsyncStorage.removeItem('messages');
+    this.setState({
+      messages: [],
+    });
+  } catch (error) {
+    console.log(error.message);
+  }
+};
    
 
     /* let { name } = this.props.route.params;
@@ -86,6 +123,15 @@ onCollectionUpdate = (querySnapshot) => {
       componentDidMount() {
         let { name } = this.props.route.params;
         this.props.navigation.setOptions({ title: name });
+
+        // check the user connection status, online? check you should fetch data from asyncStorage or Firstore
+        NetInfo.fetch().then(connection => {
+          if (connection.isConnected) {
+            console.log('online');
+          } else {
+            console.log('offline');
+          }
+        });
         		// listens for updates in the collection
 		this.unsubscribe = this.referenceChatMessages
     .orderBy('createdAt', 'desc')

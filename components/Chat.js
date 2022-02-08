@@ -7,7 +7,9 @@ import firebase from "firebase";
 import "firebase/firestore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetInfo from "@react-native-community/netinfo";
-
+import CustomActions from './CustomActions';
+// import MapView from 'react-native-maps';
+import MapView from 'react-native-maps';
 // web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyC4hkJWJiVeZA8l0jo-LMfGjbdStTj1R9M",
@@ -30,6 +32,9 @@ export default class Chat extends React.Component {
         name: "",
         avatar: "",
       },
+      isConnected: false,
+      image: null,
+      location: null,
     };
 
     // Initialize Firebase
@@ -56,6 +61,8 @@ export default class Chat extends React.Component {
           name: data.user.name,
           avatar: data.user.avatar,
         },
+        image: data.image || null,
+        location: data.location || null,
       });
     });
     this.setState({
@@ -166,6 +173,8 @@ export default class Chat extends React.Component {
       text: message.text || "",
       createdAt: message.createdAt,
       user: this.state.user,
+      image: message.image || "",
+      location: message.location || null,
     });
   }
 
@@ -196,12 +205,57 @@ export default class Chat extends React.Component {
       />
     );
   }
+  renderCustomView (props) {
+    const { currentMessage} = props;
+    if (currentMessage.location) {
+      return (
+          <MapView
+            style={{width: 150,
+              height: 100,
+              borderRadius: 13,
+              margin: 3}}
+            region={{
+              latitude: currentMessage.location.latitude,
+              longitude: currentMessage.location.longitude,
+              latitudeDelta: 0.0922,
+              longitudeDelta: 0.0421,
+            }}
+          />
+      );
+    }
+    return null;
+  }
   renderInputToolbar(props) {
     if (this.state.isConnected == false) {
     } else {
       return <InputToolbar {...props} />;
     }
   }
+   /**
+   * displays the communication features
+   * //function renderCustomActions
+   */
+    renderCustomActions = (props) => <CustomActions {...props} />;
+
+    //custom map view
+    renderCustomView(props) {
+      const { currentMessage } = props;
+      if (currentMessage.location) {
+        return (
+          <MapView
+            style={{ width: 150, height: 100, borderRadius: 13, margin: 3 }}
+            region={{
+              latitude: currentMessage.location.latitude,
+              longitude: currentMessage.location.longitude,
+              latitudeDelta: 0.0922,
+              longitudeDelta: 0.0421,
+            }}
+          />
+        );
+      }
+      return null;
+    }
+  
   render() {
     let name = this.props.route.params.name;
     this.props.navigation.setOptions({ title: name });
@@ -217,6 +271,8 @@ export default class Chat extends React.Component {
             style={styles.giftedChat}
             renderBubble={this.renderBubble.bind(this)}
             renderInputToolbar={this.renderInputToolbar.bind(this)}
+            renderActions={this.renderCustomActions}
+            renderCustomView={this.renderCustomView}
             messages={this.state.messages}
             onSend={(messages) => this.onSend(messages)}
             user={{
